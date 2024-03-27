@@ -1,11 +1,11 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose');
 
 exports.signup = async (req, res) => {
     try {
         const hashedPassword = await bcrypt.hash(req.body.motDePasse, 12);
 
-        // Créer un nouvel utilisateur
         const newUser = await User.create({
             nom: req.body.nom,
             email: req.body.email,
@@ -32,8 +32,6 @@ exports.login = async (req, res) => {
             return res.status(401).json({ message: 'Mot de passe incorrect' });
         }
 
-        // Générer un token (JWT ou autre), si nécessaire
-
         res.status(200).json({ message: 'Connexion réussie', userId: user._id });
     } catch (error) {
         res.status(500).json({ message: 'Erreur lors de la connexion' });
@@ -41,6 +39,12 @@ exports.login = async (req, res) => {
 };
 
 exports.getUser = async (req, res) => {
+    const id = req.params.userId;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: 'ID d\'utilisateur non valide' });
+    }
+    
     try {
         const user = await User.findById(req.params.userId);
         if (!user) {
@@ -53,9 +57,32 @@ exports.getUser = async (req, res) => {
     }
 };
 
-exports.updateUser = async (req, res) => {
+exports.getAllUsers = async (req, res) => {
     try {
-        const user = await User.findByIdAndUpdate(req.params.userId, req.body, { new: true });
+        const users = await User.find({});
+        res.status(200).json({ users });
+    } catch (error) {
+        res.status(500).json({ message: 'Erreur lors de la récupération des utilisateurs'});
+    }
+}
+
+
+exports.updateUser = async (req, res) => {
+    const { userId } = req.params;
+    const { motDePasse, ...otherUpdates } = req.body;
+    try {
+        let update = otherUpdates;
+        if (motDePasse) {
+            const hashedPassword = await bcrypt.hash(motDePasse, 12);
+            update = { ...otherUpdates, motDePasse: hashedPassword };
+        }
+
+        const user = await User.findByIdAndUpdate(userId, update, { new: true, runValidators: true });
+        
+        if (!user) {
+            return res.status(404).json({ message: "Utilisateur non trouvé" });
+        }
+        
         res.status(200).json({ message: 'Utilisateur mis à jour', user });
     } catch (error) {
         res.status(500).json({ message: 'Erreur lors de la mise à jour de l\'utilisateur' });

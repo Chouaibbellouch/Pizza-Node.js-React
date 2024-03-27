@@ -6,6 +6,7 @@ const Sauce = Object.freeze({
   Tomate: 'Tomate',
   Barbecue: 'Barbecue',
   Pesto: 'Pesto',
+  Crème_fraîche: 'Crème fraîche'
   // autres sauces...
 });
 
@@ -13,6 +14,7 @@ const Fromage = Object.freeze({
   Mozzarella: 'Mozzarella',
   Cheddar: 'Cheddar',
   Gorgonzola: 'Gorgonzola',
+  Parmesan: 'Parmesan',
   // autres fromages...
 });
 

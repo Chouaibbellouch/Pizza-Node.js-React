@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const Pizza = require('./pizza');
 const Schema = mongoose.Schema;
 
 const orderSchema = new Schema({
@@ -13,5 +14,23 @@ const orderSchema = new Schema({
   dateCommande: { type: Date, default: Date.now },
   adresseLivraison: String
 });
+
+orderSchema.pre('validate', async function(next) {
+  let prixTotals = 0;
+  for (let item of this.commandesPizza) {
+    const pizza = await Pizza.findById(item.pizzaId).exec();
+    if (!pizza) {
+      continue; 
+    }
+
+    item.prixTotal = pizza.prix * item.quantite;
+    prixTotals += item.prixTotal;
+  }
+
+  this.prixTotal = prixTotals;
+  next();
+});
+
+
 
 module.exports = mongoose.model('Order', orderSchema);
